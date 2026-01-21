@@ -1,0 +1,9 @@
+.env
+.env.local
+*.log
+tmp/
+vendor/
+coverage.out
+*.exe
+*.test
+*.prof

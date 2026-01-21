@@ -1,0 +1,1 @@
+ALTER TABLE referrals ALTER COLUMN referrer_id SET NOT NULL;

@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: referral_postgres
+    environment:
+      POSTGRES_USER: referral
+      POSTGRES_PASSWORD: referral_secret
+      POSTGRES_DB: referral_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U referral -d referral_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres_test:
+    image: postgres:16-alpine
+    container_name: referral_postgres_test
+    environment:
+      POSTGRES_USER: referral_test
+      POSTGRES_PASSWORD: referral_test_secret
+      POSTGRES_DB: referral_test_db
+    ports:
+      - "5435:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: referral_redis
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
