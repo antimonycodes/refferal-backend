@@ -92,7 +92,6 @@ func main() {
 	healthHandler := handlers.NewHealthHandler(db, redisCache)
 
 	// Seed Admin User
-	// Seed Admin User
 	seedCtx, seedCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer seedCancel()
 	ensureAdminExists(seedCtx, userRepo, authService, &cfg.Admin)
@@ -116,7 +115,7 @@ func main() {
 	r.Use(middleware.SecureHeaders)
 	r.Use(rateLimiter.Limit)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   []string{"http://localhost:5173", "https://referral.cirvee.com"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:   []string{"Link", "X-RateLimit-Limit", "X-RateLimit-Remaining"},
