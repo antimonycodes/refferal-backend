@@ -91,6 +91,12 @@ func main() {
 	paystackHandler := handlers.NewPaystackHandler(&cfg.Paystack)
 	healthHandler := handlers.NewHealthHandler(db, redisCache)
 
+	// Seed Admin User
+	// Seed Admin User
+	seedCtx, seedCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer seedCancel()
+	ensureAdminExists(seedCtx, userRepo, authService, &cfg.Admin)
+
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtManager)
 	rateLimiter := middleware.NewRateLimiter(redisCache, cfg.RateLimit.Requests, cfg.RateLimit.Window)
@@ -230,4 +236,31 @@ func runMigrations(databaseURL string) error {
 	}
 
 	return nil
+}
+
+func ensureAdminExists(ctx context.Context, userRepo *repository.UserRepository, authService *services.AuthService, cfg *config.AdminConfig) {
+	if cfg.Email == "" || cfg.Password == "" {
+		log.Println("Warning: ADMIN_EMAIL or ADMIN_PASSWORD not set, skipping admin creation")
+		return
+	}
+
+	exists, err := userRepo.ExistsByEmail(ctx, cfg.Email)
+	if err != nil {
+		log.Printf("Error checking for admin existence: %v", err)
+		return
+	}
+
+	if exists {
+		log.Printf("Admin user already exists: %s", cfg.Email)
+		return
+	}
+
+	log.Printf("Creating default admin user: %s", cfg.Email)
+	user, err := authService.CreateAdmin(ctx, cfg.Email, cfg.Password, cfg.Name)
+	if err != nil {
+		log.Printf("Failed to create admin user: %v", err)
+		return
+	}
+
+	log.Printf("Admin user created successfully! ID: %s", user.ID)
 }
