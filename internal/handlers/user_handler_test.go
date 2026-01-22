@@ -25,7 +25,7 @@ func setupUserHandler(t *testing.T) (*UserHandler, *database.DB, uuid.UUID, func
 
 	jwtManager := utils.NewJWTManager("test-secret", "test-refresh", 15*time.Minute, 168*time.Hour)
 	userRepo := repository.NewUserRepository(db)
-	referralRepo := repository.NewReferralRepository(db)
+	referralRepo := repository.NewReferralRepository(db, nil)
 	clickRepo := repository.NewClickRepository(db)
 	authService := services.NewAuthService(userRepo, jwtManager)
 

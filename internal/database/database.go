@@ -11,14 +11,14 @@ type DB struct {
 	Pool *pgxpool.Pool
 }
 
-func New(databaseURL string) (*DB, error) {
+func New(databaseURL string, maxConns int) (*DB, error) {
 	config, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		return nil, err
 	}
 
 	// Connection pool settings for production
-	config.MaxConns = 25
+	config.MaxConns = int32(maxConns)
 	config.MinConns = 5
 	config.MaxConnLifetime = time.Hour
 	config.MaxConnIdleTime = 30 * time.Minute

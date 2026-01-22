@@ -13,17 +13,17 @@ import (
 
 // Course prices and earnings percentages (can be moved to config)
 var coursePrices = map[string]int64{
-	"Web Development":    150000,
-	"Data Science":       180000,
-	"Mobile Development": 160000,
-	"UI/UX Design":       120000,
+	"Web Development":    750000,
+	"Data Science":       400000,
+	"Mobile Development": 400000,
+	"UI/UX Design":       350000,
 	"Digital Marketing":  100000,
-	"Cybersecurity":      200000,
-	"Cloud Computing":    170000,
-	"Machine Learning":   190000,
+	"Cybersecurity":      400000,
+	"Cloud Computing":    400000,
+	"Machine Learning":   400000,
 }
 
-const earningsPercentage = 10 // 10% commission
+const referralCommission = 10000
 
 type StudentHandler struct {
 	userRepo     *repository.UserRepository
@@ -97,7 +97,7 @@ func (h *StudentHandler) RegisterStudent(w http.ResponseWriter, r *http.Request)
 		} else {
 			// Valid referral
 			referrerID = &referrer.ID
-			earnings = (coursePrice * int64(earningsPercentage)) / 100
+			earnings = referralCommission
 			referrerName = referrer.Name
 			referrerEmail = referrer.Email
 		}
@@ -120,6 +120,8 @@ func (h *StudentHandler) RegisterStudent(w http.ResponseWriter, r *http.Request)
 		respondError(w, http.StatusInternalServerError, "failed to create referral record")
 		return
 	}
+	// Invalidate dashboard cache significantly to show new stats immediately
+	_ = h.referralRepo.InvalidateDashboardCache(r.Context())
 
 	// Send emails (async)
 	go h.emailService.SendStudentConfirmation(req.Email, req.Name, req.Course)

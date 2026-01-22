@@ -39,7 +39,7 @@ func main() {
 	}
 
 	// Connect to database
-	db, err := database.New(cfg.Database.URL)
+	db, err := database.New(cfg.Database.URL, cfg.Database.MaxConns)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -64,7 +64,7 @@ func main() {
 
 	// Repositories
 	userRepo := repository.NewUserRepository(db)
-	referralRepo := repository.NewReferralRepository(db)
+	referralRepo := repository.NewReferralRepository(db, redisCache)
 	payoutRepo := repository.NewPayoutRepository(db)
 	clickRepo := repository.NewClickRepository(db)
 	resetTokenRepo := repository.NewResetTokenRepository(db)

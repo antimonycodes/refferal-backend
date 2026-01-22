@@ -25,7 +25,7 @@ func main() {
 	}
 
 	// Connect to database
-	db, err := database.New(cfg.Database.URL)
+	db, err := database.New(cfg.Database.URL, cfg.Database.MaxConns)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

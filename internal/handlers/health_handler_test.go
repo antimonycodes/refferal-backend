@@ -17,7 +17,7 @@ func TestHealthHandler_Health_Success(t *testing.T) {
 	dbURL := "postgres://referral_test:referral_test_secret@localhost:5435/referral_test_db?sslmode=disable"
 	redisURL := "redis://localhost:6380"
 
-	db, err := database.New(dbURL)
+	db, err := database.New(dbURL, 10)
 	if err != nil {
 		t.Skipf("Skipping test - database not available: %v", err)
 	}
@@ -49,7 +49,7 @@ func TestHealthHandler_Health_NilDB(t *testing.T) {
 	dbURL := "postgres://referral_test:referral_test_secret@localhost:5435/referral_test_db?sslmode=disable"
 	redisURL := "redis://localhost:6380"
 
-	db, err := database.New(dbURL)
+	db, err := database.New(dbURL, 10)
 	if err != nil {
 		t.Skipf("Skipping test - database not available: %v", err)
 	}

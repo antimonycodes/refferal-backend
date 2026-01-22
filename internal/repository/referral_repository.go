@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"encoding/json"
+	"time"
+
+	"github.com/cirvee/referral-backend/internal/cache"
 	"github.com/cirvee/referral-backend/internal/database"
 	"github.com/cirvee/referral-backend/internal/models"
 	"github.com/google/uuid"
@@ -15,11 +19,15 @@ var (
 )
 
 type ReferralRepository struct {
-	db *database.DB
+	db    *database.DB
+	cache *cache.Cache
 }
 
-func NewReferralRepository(db *database.DB) *ReferralRepository {
-	return &ReferralRepository{db: db}
+func NewReferralRepository(db *database.DB, cache *cache.Cache) *ReferralRepository {
+	return &ReferralRepository{
+		db:    db,
+		cache: cache,
+	}
 }
 
 func (r *ReferralRepository) Create(ctx context.Context, referral *models.Referral) error {
@@ -167,6 +175,19 @@ func (r *ReferralRepository) GetStatsByReferrer(ctx context.Context, referrerID 
 }
 
 func (r *ReferralRepository) GetTotalStats(ctx context.Context) (totalReferrals int, totalEarnings int64, pendingEarnings int64, totalPaidEarnings int64, paidCount int, totalCodes int, activeCodes int, totalEnrollments int, totalUniqueCourses int, err error) {
+	cacheKey := "admin:dashboard:stats"
+
+	// Try to get from cache
+	if r.cache != nil {
+		cached, err := r.cache.Get(ctx, cacheKey)
+		if err == nil {
+			var stats models.DashboardStats
+			if jsonErr := json.Unmarshal([]byte(cached), &stats); jsonErr == nil {
+				return stats.TotalReferrals, stats.TotalEarnings, stats.PendingBalance, stats.TotalPaidEarnings, stats.PaidCount, stats.TotalCodes, stats.ActiveCodes, stats.TotalStudents, stats.TotalUniqueCourses, nil
+			}
+		}
+	}
+
 	// Total Referrals (with a referrer), Total Earnings, Pending Earnings, Paid Earnings - Include all referrals
 	query1 := `
 		SELECT 
@@ -209,6 +230,30 @@ func (r *ReferralRepository) GetTotalStats(ctx context.Context) (totalReferrals 
 	// Total Unique Courses
 	query5 := `SELECT COUNT(DISTINCT course) FROM referrals`
 	err = r.db.Pool.QueryRow(ctx, query5).Scan(&totalUniqueCourses)
+	if err != nil {
+		return
+	}
+
+	// Cache the results
+	stats := models.DashboardStats{
+		TotalEarnings:      totalEarnings,
+		TotalReferrals:     totalReferrals,
+		TotalPayouts:       totalPaidEarnings,
+		PendingBalance:     pendingEarnings,
+		TotalPaidEarnings:  totalPaidEarnings,
+		PaidCount:          paidCount,
+		ActiveCodes:        activeCodes,
+		TotalCodes:         totalCodes,
+		TotalStudents:      totalEnrollments,
+		TotalUniqueCourses: totalUniqueCourses,
+	}
+
+	if r.cache != nil {
+		if statsJSON, jsonErr := json.Marshal(stats); jsonErr == nil {
+			_ = r.cache.Set(ctx, cacheKey, statsJSON, 5*time.Minute)
+		}
+	}
+
 	return
 }
 
@@ -255,7 +300,7 @@ func (r *ReferralRepository) GetReferrersStats(ctx context.Context, page, perPag
 			return nil, 0, err
 		}
 
-		// Derive status based on usage for now
+		// Derive status based on usage
 		if s.TotalUsage > 0 {
 			s.Status = "Active"
 		} else {
@@ -281,4 +326,12 @@ func (r *ReferralRepository) MarkReferralsAsPaid(ctx context.Context, referrerID
 // MarkReferralAsPaid marks a single referral as paid
 func (r *ReferralRepository) MarkReferralAsPaid(ctx context.Context, id uuid.UUID) error {
 	return r.UpdateStatus(ctx, id, "paid")
+}
+
+// InvalidateDashboardCache clears the cached dashboard stats
+func (r *ReferralRepository) InvalidateDashboardCache(ctx context.Context) error {
+	if r.cache == nil {
+		return nil
+	}
+	return r.cache.Delete(ctx, "admin:dashboard:stats")
 }

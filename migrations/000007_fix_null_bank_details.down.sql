@@ -1,0 +1,1 @@
+-- No operation needed for down migration as we don't want to revert valid data to NULL

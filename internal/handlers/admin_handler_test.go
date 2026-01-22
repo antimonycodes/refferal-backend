@@ -21,7 +21,7 @@ func setupAdminHandler(t *testing.T) (*AdminHandler, *database.DB, func()) {
 	db, cleanup := setupTestDB(t)
 
 	userRepo := repository.NewUserRepository(db)
-	referralRepo := repository.NewReferralRepository(db)
+	referralRepo := repository.NewReferralRepository(db, nil)
 	payoutRepo := repository.NewPayoutRepository(db)
 
 	handler := NewAdminHandler(userRepo, referralRepo, payoutRepo)

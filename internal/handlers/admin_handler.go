@@ -391,6 +391,9 @@ func (h *AdminHandler) UpdateReferralStatus(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Invalidate dashboard cache
+	_ = h.referralRepo.InvalidateDashboardCache(r.Context())
+
 	respondJSON(w, http.StatusOK, map[string]string{"message": "referral status updated"})
 }
 
@@ -421,8 +424,10 @@ func (h *AdminHandler) MarkReferralPaid(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		respondError(w, http.StatusInternalServerError, "failed to mark referral as paid")
-		return
 	}
+
+	// Invalidate dashboard cache
+	_ = h.referralRepo.InvalidateDashboardCache(r.Context())
 
 	respondJSON(w, http.StatusOK, map[string]string{"message": "referral marked as paid"})
 }

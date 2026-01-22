@@ -1,3 +1,6 @@
+include .env
+export $(shell sed 's/=.*//' .env)
+
 .PHONY: all build run test test-cover test-race docker-up docker-down migrate-up migrate-down seed
 
 # Build
@@ -22,8 +25,8 @@ docker-logs:
 migrate-up:
 	migrate -path migrations -database "$(DATABASE_URL)" up
 
-migrate-down:
-	migrate -path migrations -database "$(DATABASE_URL)" down
+# migrate-down:
+# 	migrate -path migrations -database "$(DATABASE_URL)" down
 
 migrate-create:
 	migrate create -ext sql -dir migrations -seq $(name)

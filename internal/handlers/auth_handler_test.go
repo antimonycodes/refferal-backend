@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cirvee/referral-backend/internal/config"
 	"github.com/cirvee/referral-backend/internal/database"
 	"github.com/cirvee/referral-backend/internal/models"
 	"github.com/cirvee/referral-backend/internal/repository"
@@ -180,7 +181,7 @@ func TestAuthHandler_RefreshToken_MissingToken(t *testing.T) {
 func setupTestDB(t *testing.T) (*database.DB, func()) {
 	dbURL := "postgres://referral_test:referral_test_secret@localhost:5435/referral_test_db?sslmode=disable"
 
-	db, err := database.New(dbURL)
+	db, err := database.New(dbURL, 10)
 	if err != nil {
 		t.Skipf("Skipping integration test - database not available: %v", err)
 	}
@@ -204,7 +205,8 @@ func TestAuthHandler_Register_Integration(t *testing.T) {
 	jwtManager := utils.NewJWTManager("test-secret", "test-refresh", 15*time.Minute, 168*time.Hour)
 	userRepo := repository.NewUserRepository(db)
 	authService := services.NewAuthService(userRepo, jwtManager)
-	handler := NewAuthHandler(authService, nil, userRepo, nil)
+	emailService := services.NewEmailService(&config.SMTPConfig{})
+	handler := NewAuthHandler(authService, emailService, userRepo, nil)
 
 	payload := models.RegisterRequest{
 		Email:    "integration@test.com",
@@ -238,7 +240,8 @@ func TestAuthHandler_Login_Integration(t *testing.T) {
 	jwtManager := utils.NewJWTManager("test-secret", "test-refresh", 15*time.Minute, 168*time.Hour)
 	userRepo := repository.NewUserRepository(db)
 	authService := services.NewAuthService(userRepo, jwtManager)
-	handler := NewAuthHandler(authService, nil, userRepo, nil)
+	emailService := services.NewEmailService(&config.SMTPConfig{})
+	handler := NewAuthHandler(authService, emailService, userRepo, nil)
 
 	// First register a user
 	registerPayload := models.RegisterRequest{
@@ -281,7 +284,8 @@ func TestAuthHandler_Login_WrongPassword_Integration(t *testing.T) {
 	jwtManager := utils.NewJWTManager("test-secret", "test-refresh", 15*time.Minute, 168*time.Hour)
 	userRepo := repository.NewUserRepository(db)
 	authService := services.NewAuthService(userRepo, jwtManager)
-	handler := NewAuthHandler(authService, nil, userRepo, nil)
+	emailService := services.NewEmailService(&config.SMTPConfig{})
+	handler := NewAuthHandler(authService, emailService, userRepo, nil)
 
 	// Register user
 	registerPayload := models.RegisterRequest{
@@ -318,7 +322,8 @@ func TestAuthHandler_DuplicateEmail_Integration(t *testing.T) {
 	jwtManager := utils.NewJWTManager("test-secret", "test-refresh", 15*time.Minute, 168*time.Hour)
 	userRepo := repository.NewUserRepository(db)
 	authService := services.NewAuthService(userRepo, jwtManager)
-	handler := NewAuthHandler(authService, nil, userRepo, nil)
+	emailService := services.NewEmailService(&config.SMTPConfig{})
+	handler := NewAuthHandler(authService, emailService, userRepo, nil)
 
 	payload := models.RegisterRequest{
 		Email:    "duplicate@test.com",

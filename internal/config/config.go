@@ -26,8 +26,9 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	URL     string
-	TestURL string
+	URL      string
+	TestURL  string
+	MaxConns int
 }
 
 type RedisConfig struct {
@@ -85,8 +86,9 @@ func Load() (*Config, error) {
 			Env:  getEnv("ENV", "development"),
 		},
 		Database: DatabaseConfig{
-			URL:     getEnv("DATABASE_URL", ""),
-			TestURL: getEnv("DATABASE_TEST_URL", ""),
+			URL:      getEnv("DATABASE_URL", ""),
+			TestURL:  getEnv("DATABASE_TEST_URL", ""),
+			MaxConns: getEnvInt("DB_MAX_CONNS", 25),
 		},
 		Redis: RedisConfig{
 			URL: getEnv("REDIS_URL", "redis://localhost:6379"),

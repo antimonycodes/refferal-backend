@@ -31,8 +31,8 @@ func setupTestServer(t *testing.T) (http.Handler, func()) {
 		redisURL = "redis://localhost:6379"
 	}
 
-	// Connect to test database
-	db, err := database.New(dbURL)
+	// Connect to test database (max 10 connections)
+	db, err := database.New(dbURL, 10)
 	if err != nil {
 		t.Fatalf("Failed to connect to test database: %v", err)
 	}
@@ -59,7 +59,7 @@ func setupTestServer(t *testing.T) (http.Handler, func()) {
 
 	// Repositories
 	userRepo := repository.NewUserRepository(db)
-	referralRepo := repository.NewReferralRepository(db)
+	referralRepo := repository.NewReferralRepository(db, redisCache)
 	payoutRepo := repository.NewPayoutRepository(db)
 	clickRepo := repository.NewClickRepository(db)
 
